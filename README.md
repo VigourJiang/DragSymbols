@@ -2,9 +2,8 @@
 The projects in these repositories correspond to individual lessons in the free online android 
 programming course at http://eagle.phys.utk.edu/guidry/android/
 
-The project <b>DragSymbols</b> extends the project <a href="" target="_new"></a> and illustrates some more advanced
-techniques for dragging arbitrary 
-user-defined symbols around the screen.
+The project <b>DragSymbols</b> extends the project <a href="https://github.com/guidrymwg/DraggableSymbols" target="_new">DraggableSymbols</a> and illustrates some more advanced
+techniques for dragging arbitrary user-defined symbols around the screen.
 
 ## Prerequisites
 This project assumes the Gradle build system in Android Studio. It was targeted at Android 6.0 (API 23) 
