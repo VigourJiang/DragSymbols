@@ -17,7 +17,7 @@ See also
 http://android-developers.blogspot.com/2010/07/how-to-have-your-cupcake-and-eat-it-too.html
 */
 
-public class SymbolDragger extends View {
+public class DragginSlayer extends View {
 
     // Colors for background and text
     private static final int BACKGROUND_COLOR = Color.argb(255, 210, 210, 210);
@@ -44,11 +44,11 @@ public class SymbolDragger extends View {
     private boolean isDragging = false; // True if some symbol is being dragged
 
     // Simplest default constructor. Not used, but prevents a warning message.
-    public SymbolDragger(Context context) {
+    public DragginSlayer(Context context) {
         super(context);
     }
 
-    public SymbolDragger(Context context, float[] X, float[] Y,
+    public DragginSlayer(Context context, float[] X, float[] Y,
                          int[] symbolIndex) {
 
         // Call through to simplest constructor of View superclass

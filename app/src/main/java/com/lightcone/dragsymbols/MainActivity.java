@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
        * screen.
        */
 
-        SymbolDragger view = new SymbolDragger(this, X, Y, symbolIndex);
+        DragginSlayer view = new DragginSlayer(this, X, Y, symbolIndex);
         view.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
