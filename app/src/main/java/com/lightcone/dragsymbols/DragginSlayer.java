@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 /*
 Demonstration of one way to put a set of draggable symbols on screen.
@@ -24,8 +25,12 @@ public class DragginSlayer extends View {
     private static final int HEADER_COLOR = Color.argb(255, 190, 190, 190);
     private static final int TEXT_COLOR = Color.argb(255, 0, 0, 0);
 
+    private static final int maxInstances = 12; // Max symbol instances permitted onstage
+
     private int numberSymbols; // Total number of symbols to use
+    private int numberInstances;  // Total number of symbol instances onstage
     private Drawable[] symbol; // Array of symbols (dimension numberSymbols)
+    private int [] symbolIndex;  // Index of Drawable resource (R.drawable.symbol)
     private float[] X; // Current x coordinate, upper left corner of symbol
     private float[] Y; // Current y coordinate, upper left corner of symbol
     private Drawable [] symbol0;    // Array of symbols (dimension numberSymbols)
@@ -36,6 +41,7 @@ public class DragginSlayer extends View {
     private float[] lastTouchX; // x coordinate of symbol at last touch
     private float[] lastTouchY; // y coordinate of symbol at last touch
     private int symbolSelected; // Index of symbol last touched (-1 if none)
+    private int instanceSelected;  // Index of symbol instance last touched (-1 if none)
     private Paint paint;
 
     // Following define upper left and lower right corners of display stage rectangle
@@ -46,50 +52,54 @@ public class DragginSlayer extends View {
 
     private boolean isDragging = false; // True if some symbol is being dragged
 
+    private Context context;
+
     // Simplest default constructor. Not used, but prevents a warning message.
     public DragginSlayer(Context context) {
         super(context);
     }
 
-    public DragginSlayer(Context context, float[] X, float[] Y,
+    public DragginSlayer(Context context, float[] XX, float[] YY,
                          int[] symbolIndex) {
 
         // Call through to simplest constructor of View superclass
         super(context);
 
+        this.context = context;
+
+        // Initialize instance counter
+        numberInstances = 0;
+
         // Set up local arrays defining symbol positions with the initial
         // positions passed as arguments in the constructor
 
-        this.X = X;
-        this.Y = Y;
+        this.X0 = XX;
+        this.Y0 = YY;
+        this.symbolIndex = symbolIndex;
 
-        numberSymbols = X.length;
-        X0 = new float[numberSymbols];
-        Y0 = new float[numberSymbols];
+        numberSymbols = X0.length;
+        this.X = new float[maxInstances];
+        this.Y = new float[maxInstances];
         symbol0 = new Drawable[numberSymbols];
-        symbol = new Drawable[numberSymbols];
+        symbol = new Drawable[maxInstances];
         symbolWidth = new int[numberSymbols];
         symbolHeight = new int[numberSymbols];
-        lastTouchX = new float[numberSymbols];
-        lastTouchY = new float[numberSymbols];
+        lastTouchX = new float[maxInstances];
+        lastTouchY = new float[maxInstances];
 
         // Fill the symbol arrays with data
         for (int i = 0; i < numberSymbols; i++) {
 
-            X0[i] = X[i];
-            Y0[i] = Y[i];
             // Handle method getDrawable deprecated as of API 22
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 // Theme required but set to null since no styling for it
-                symbol[i] = context.getResources().getDrawable(symbolIndex[i],null);
+                symbol0[i] = context.getResources().getDrawable(symbolIndex[i],null);
             } else {
-                symbol[i] = context.getResources().getDrawable(symbolIndex[i]);
+                symbol0[i] = context.getResources().getDrawable(symbolIndex[i]);
             }
 
-            symbolWidth[i] = symbol[i].getIntrinsicWidth();
-            symbolHeight[i] = symbol[i].getIntrinsicHeight();
-            symbol[i].setBounds(0, 0, symbolWidth[i], symbolHeight[i]);
-            symbol0[i] = context.getResources().getDrawable(symbolIndex[i]);
+            symbolWidth[i] = symbol0[i].getIntrinsicWidth();
+            symbolHeight[i] = symbol0[i].getIntrinsicHeight();
             symbol0[i].setBounds(0,0,symbolWidth[i],symbolHeight[i]);
         }
 
@@ -109,6 +119,8 @@ public class DragginSlayer extends View {
          * switch on the returned integer to determine the kind of event and the
          * appropriate action.
          */
+
+    // See android.view.View#onTouchEvent(android.view.MotionEvent)
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
@@ -130,24 +142,44 @@ public class DragginSlayer extends View {
                 // Initialize. Will be -1 if not within the current bounds of some
                 // symbol.
 
-                symbolSelected = -1;
+                symbolSelected = -1;   // -1 if not within current bounds of symbol source
+                instanceSelected = -1; // -1 if touch not within bounds of symbol instance
 
-                // Determine if touch within bounds of one of the symbols
+                // Determine if touch within bounds of one of the symbol sources offstage
 
                 for (int i = 0; i < numberSymbols; i++) {
-                    if ((x > X[i] && x < (X[i] + symbolWidth[i]))
-                            && (y > Y[i] && y < (Y[i] + symbolHeight[i]))) {
+                    if ((x > X0[i] && x < (X0[i] + symbolWidth[i]))
+                            && (y > Y0[i] && y < (Y0[i] + symbolHeight[i]))) {
                         symbolSelected = i;
+
+                        // Warn if max number of instances has been reached (won't create any more)
+                        if(numberInstances == maxInstances){
+                            String toaster = "Maximum number of instances ";
+                            toaster += "("+maxInstances+") has been reached.";
+                            Toast.makeText(context, toaster, Toast.LENGTH_LONG).show();
+                        }
                         break;
                     }
                 }
 
-                // If touch within bounds of a symbol, remember start position for
-                // this symbol
+                // Determine if touch within bounds of one of the symbol instances onstage
 
-                if (symbolSelected > -1) {
-                    lastTouchX[symbolSelected] = x;
-                    lastTouchY[symbolSelected] = y;
+                for (int i=0; i<numberInstances; i++) {
+                    int width = symbol[i].getIntrinsicWidth();
+                    int height = symbol[i].getIntrinsicHeight();
+                    if( (x>X[i] && x<(X[i]+width)) &&
+                            (y>Y[i] && y<(Y[i]+height)) ) {
+                        instanceSelected = i;  // Index of instance touched
+                        break;
+                    }
+                }
+
+                // If touch within bounds of symbol source or instance, remember start position
+                // for this symbol
+
+                if (symbolSelected > -1 || instanceSelected > -1) {
+                    if(instanceSelected > -1) lastTouchX[instanceSelected] = x;
+                    if(instanceSelected > -1) lastTouchY[instanceSelected] = y;
                 }
                 break;
             }
@@ -156,27 +188,47 @@ public class DragginSlayer extends View {
 
             case MotionEvent.ACTION_MOVE: {
 
-                // Only process if touch selected a symbol
-                if (symbolSelected > -1) {
+                // Only process if touch selected a symbol and not background
+
+                        /* If touch and drag were on symbol source, and this hasn't yet been processed,
+                        * first create a new symbol instance (but only if the max number of instances
+                        * will not be exceeded).  Do it here rather than in ACTION_DOWN so that just
+                        * pressing the source symbol without a drag will not create a new instance.
+                        * */
+
+                if(symbolSelected > -1 && instanceSelected == -1 && numberInstances < maxInstances){
+
+                    symbol[numberInstances] = context.getResources()
+                            .getDrawable(symbolIndex[symbolSelected]);
+                    symbol[numberInstances]
+                            .setBounds(0,0,symbolWidth[symbolSelected],symbolHeight[symbolSelected]);
+                    instanceSelected = numberInstances;
+                    numberInstances ++;
+
+                }
+
+                // Drag the instance if selected (either an old instance or one just created)
+
+                if (instanceSelected > -1) {
                     isDragging = true;
                     final float x = ev.getX();
                     final float y = ev.getY();
 
                     // Calculate the distance moved
-                    final float dx = x - lastTouchX[symbolSelected];
-                    final float dy = y - lastTouchY[symbolSelected];
+                    final float dx = x - lastTouchX[instanceSelected];
+                    final float dy = y - lastTouchY[instanceSelected];
 
                     // Move the object selected. Note that we are simply
                     // illustrating how to drag symbols. In an actual application,
                     // you would probably want to add some logic to confine the symbols
                     // to a region the size of the visible stage or smaller.
 
-                    X[symbolSelected] += dx;
-                    Y[symbolSelected] += dy;
+                    X[instanceSelected] += dx;
+                    Y[instanceSelected] += dy;
 
                     // Remember this touch position for the next move event of this object
-                    lastTouchX[symbolSelected] = x;
-                    lastTouchY[symbolSelected] = y;
+                    lastTouchX[instanceSelected] = x;
+                    lastTouchY[instanceSelected] = y;
 
                     // Request a redraw
                     invalidate();
@@ -209,7 +261,7 @@ public class DragginSlayer extends View {
         drawBackground(paint, canvas);
 
         // Draw all draggable symbols at their current locations
-        for (int i = 0; i < numberSymbols; i++) {
+        for (int i = 0; i < numberInstances; i++) {
             canvas.save();
             canvas.translate(X[i], Y[i]);
             symbol[i].draw(canvas);
@@ -232,8 +284,6 @@ public class DragginSlayer extends View {
         canvas.drawRect(stageX1, stageY1, stageX2, stageY2, paint);
 
         // Draw image of symbols at their original locations to denote source
-        // (But presently set up so that only one instance of each symbol can
-        // be dragged onto the stage.)
 
         for(int i=0; i<numberSymbols; i++){
             canvas.save();
@@ -242,13 +292,16 @@ public class DragginSlayer extends View {
             canvas.restore();
         }
 
-        // If dragging a symbol, display its x and y coordinates in a readout
+        // If dragging a symbol, display its x and y coordinates as dragged
         if (isDragging) {
             paint.setColor(TEXT_COLOR);
-            canvas.drawText("X = " + X[symbolSelected],
+            canvas.drawText("Instance "+instanceSelected,
                     MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 - 10, paint);
-            canvas.drawText("Y = " + Y[symbolSelected],
+                    MainActivity.topMargin / 2 - 15, paint);
+            canvas.drawText("X = " + X[instanceSelected],
+                    MainActivity.screenWidth / 2,
+                    MainActivity.topMargin / 2 + 5, paint);
+            canvas.drawText("Y = " + Y[instanceSelected],
                     MainActivity.screenWidth / 2,
                     MainActivity.topMargin / 2 + 25, paint);
         }
