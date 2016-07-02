@@ -28,6 +28,9 @@ public class DragginSlayer extends View {
     private Drawable[] symbol; // Array of symbols (dimension numberSymbols)
     private float[] X; // Current x coordinate, upper left corner of symbol
     private float[] Y; // Current y coordinate, upper left corner of symbol
+    private Drawable [] symbol0;    // Array of symbols (dimension numberSymbols)
+    private float [] X0;    // Initial x coordinate, upper left corner of symbol i
+    private float [] Y0;    // Initial y coordinate, upper left corner of symbol i
     private int[] symbolWidth; // Width of symbol
     private int[] symbolHeight; // Height of symbol
     private float[] lastTouchX; // x coordinate of symbol at last touch
@@ -61,6 +64,9 @@ public class DragginSlayer extends View {
         this.Y = Y;
 
         numberSymbols = X.length;
+        X0 = new float[numberSymbols];
+        Y0 = new float[numberSymbols];
+        symbol0 = new Drawable[numberSymbols];
         symbol = new Drawable[numberSymbols];
         symbolWidth = new int[numberSymbols];
         symbolHeight = new int[numberSymbols];
@@ -70,6 +76,8 @@ public class DragginSlayer extends View {
         // Fill the symbol arrays with data
         for (int i = 0; i < numberSymbols; i++) {
 
+            X0[i] = X[i];
+            Y0[i] = Y[i];
             // Handle method getDrawable deprecated as of API 22
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 // Theme required but set to null since no styling for it
@@ -81,6 +89,8 @@ public class DragginSlayer extends View {
             symbolWidth[i] = symbol[i].getIntrinsicWidth();
             symbolHeight[i] = symbol[i].getIntrinsicHeight();
             symbol[i].setBounds(0, 0, symbolWidth[i], symbolHeight[i]);
+            symbol0[i] = context.getResources().getDrawable(symbolIndex[i]);
+            symbol0[i].setBounds(0,0,symbolWidth[i],symbolHeight[i]);
         }
 
         // Set up the Paint object that will control format of screen draws
@@ -220,6 +230,17 @@ public class DragginSlayer extends View {
         // Draw main stage background
         paint.setColor(BACKGROUND_COLOR);
         canvas.drawRect(stageX1, stageY1, stageX2, stageY2, paint);
+
+        // Draw image of symbols at their original locations to denote source
+        // (But presently set up so that only one instance of each symbol can
+        // be dragged onto the stage.)
+
+        for(int i=0; i<numberSymbols; i++){
+            canvas.save();
+            canvas.translate(X0[i],Y0[i]);
+            symbol0[i].draw(canvas);
+            canvas.restore();
+        }
 
         // If dragging a symbol, display its x and y coordinates in a readout
         if (isDragging) {
