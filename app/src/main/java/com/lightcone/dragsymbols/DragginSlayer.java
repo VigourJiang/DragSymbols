@@ -297,13 +297,13 @@ public class DragginSlayer extends View {
             paint.setColor(TEXT_COLOR);
             canvas.drawText("Instance "+instanceSelected,
                     MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 - 15, paint);
+                    MainActivity.topMargin / 2 - 50, paint);
             canvas.drawText("X = " + X[instanceSelected],
                     MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 + 5, paint);
+                    MainActivity.topMargin / 2 + 0, paint);
             canvas.drawText("Y = " + Y[instanceSelected],
                     MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 + 25, paint);
+                    MainActivity.topMargin / 2 + 50, paint);
         }
     }
 }
