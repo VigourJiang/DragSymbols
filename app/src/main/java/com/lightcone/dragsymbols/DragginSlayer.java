@@ -30,12 +30,12 @@ public class DragginSlayer extends View {
     private int numberSymbols; // Total number of symbols to use
     private int numberInstances;  // Total number of symbol instances onstage
     private Drawable[] symbol; // Array of symbols (dimension numberSymbols)
-    private int [] symbolIndex;  // Index of Drawable resource (R.drawable.symbol)
+    private int[] symbolIndex;  // Index of Drawable resource (R.drawable.symbol)
     private float[] X; // Current x coordinate, upper left corner of symbol
     private float[] Y; // Current y coordinate, upper left corner of symbol
-    private Drawable [] symbol0;    // Array of symbols (dimension numberSymbols)
-    private float [] X0;    // Initial x coordinate, upper left corner of symbol i
-    private float [] Y0;    // Initial y coordinate, upper left corner of symbol i
+    private Drawable[] symbol0;    // Array of symbols (dimension numberSymbols)
+    private float[] X0;    // Initial x coordinate, upper left corner of symbol i
+    private float[] Y0;    // Initial y coordinate, upper left corner of symbol i
     private int[] symbolWidth; // Width of symbol
     private int[] symbolHeight; // Height of symbol
     private float[] lastTouchX; // x coordinate of symbol at last touch
@@ -93,14 +93,14 @@ public class DragginSlayer extends View {
             // Handle method getDrawable deprecated as of API 22
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 // Theme required but set to null since no styling for it
-                symbol0[i] = context.getResources().getDrawable(symbolIndex[i],null);
+                symbol0[i] = context.getResources().getDrawable(symbolIndex[i], null);
             } else {
                 symbol0[i] = context.getResources().getDrawable(symbolIndex[i]);
             }
 
             symbolWidth[i] = symbol0[i].getIntrinsicWidth();
             symbolHeight[i] = symbol0[i].getIntrinsicHeight();
-            symbol0[i].setBounds(0,0,symbolWidth[i],symbolHeight[i]);
+            symbol0[i].setBounds(0, 0, symbolWidth[i], symbolHeight[i]);
         }
 
         // Set up the Paint object that will control format of screen draws
@@ -153,9 +153,9 @@ public class DragginSlayer extends View {
                         symbolSelected = i;
 
                         // Warn if max number of instances has been reached (won't create any more)
-                        if(numberInstances == maxInstances){
+                        if (numberInstances == maxInstances) {
                             String toaster = "Maximum number of instances ";
-                            toaster += "("+maxInstances+") has been reached.";
+                            toaster += "(" + maxInstances + ") has been reached.";
                             Toast.makeText(context, toaster, Toast.LENGTH_LONG).show();
                         }
                         break;
@@ -164,11 +164,11 @@ public class DragginSlayer extends View {
 
                 // Determine if touch within bounds of one of the symbol instances onstage
 
-                for (int i=0; i<numberInstances; i++) {
+                for (int i = 0; i < numberInstances; i++) {
                     int width = symbol[i].getIntrinsicWidth();
                     int height = symbol[i].getIntrinsicHeight();
-                    if( (x>X[i] && x<(X[i]+width)) &&
-                            (y>Y[i] && y<(Y[i]+height)) ) {
+                    if ((x > X[i] && x < (X[i] + width)) &&
+                            (y > Y[i] && y < (Y[i] + height))) {
                         instanceSelected = i;  // Index of instance touched
                         break;
                     }
@@ -178,8 +178,8 @@ public class DragginSlayer extends View {
                 // for this symbol
 
                 if (symbolSelected > -1 || instanceSelected > -1) {
-                    if(instanceSelected > -1) lastTouchX[instanceSelected] = x;
-                    if(instanceSelected > -1) lastTouchY[instanceSelected] = y;
+                    if (instanceSelected > -1) lastTouchX[instanceSelected] = x;
+                    if (instanceSelected > -1) lastTouchY[instanceSelected] = y;
                 }
                 break;
             }
@@ -190,20 +190,25 @@ public class DragginSlayer extends View {
 
                 // Only process if touch selected a symbol and not background
 
-                        /* If touch and drag were on symbol source, and this hasn't yet been processed,
-                        * first create a new symbol instance (but only if the max number of instances
-                        * will not be exceeded).  Do it here rather than in ACTION_DOWN so that just
-                        * pressing the source symbol without a drag will not create a new instance.
-                        * */
+                /* If touch and drag were on symbol source, and this hasn't yet been processed,
+                * first create a new symbol instance (but only if the max number of instances
+                * will not be exceeded).  Do it here rather than in ACTION_DOWN so that just
+                * pressing the source symbol without a drag will not create a new instance.
+                * */
 
-                if(symbolSelected > -1 && instanceSelected == -1 && numberInstances < maxInstances){
+                if (symbolSelected > -1 && instanceSelected == -1 && numberInstances < maxInstances) {
 
-                    symbol[numberInstances] = context.getResources()
-                            .getDrawable(symbolIndex[symbolSelected]);
+                    // Handle method getDrawable deprecated as of API 22
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        // Theme required but set to null since no styling for it
+                        symbol[numberInstances] = context.getResources().getDrawable(symbolIndex[symbolSelected], null);
+                    } else {
+                        symbol[numberInstances] = context.getResources().getDrawable(symbolIndex[symbolSelected]);
+                    }
                     symbol[numberInstances]
-                            .setBounds(0,0,symbolWidth[symbolSelected],symbolHeight[symbolSelected]);
+                            .setBounds(0, 0, symbolWidth[symbolSelected], symbolHeight[symbolSelected]);
                     instanceSelected = numberInstances;
-                    numberInstances ++;
+                    numberInstances++;
 
                 }
 
@@ -285,25 +290,25 @@ public class DragginSlayer extends View {
 
         // Draw image of symbols at their original locations to denote source
 
-        for(int i=0; i<numberSymbols; i++){
+        for (int i = 0; i < numberSymbols; i++) {
             canvas.save();
-            canvas.translate(X0[i],Y0[i]);
+            canvas.translate(X0[i], Y0[i]);
             symbol0[i].draw(canvas);
             canvas.restore();
         }
 
-        // If dragging a symbol, display its x and y coordinates as dragged
+        // If dragging a symbol, display its instance number and x and y coordinates as dragged
         if (isDragging) {
             paint.setColor(TEXT_COLOR);
-            canvas.drawText("Instance "+instanceSelected,
-                    MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 - 50, paint);
+            canvas.drawText("Instance " + instanceSelected,
+                    MainActivity.screenWidth/2,
+                    MainActivity.topMargin/2 - 50, paint);
             canvas.drawText("X = " + X[instanceSelected],
-                    MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 + 0, paint);
+                    MainActivity.screenWidth/2,
+                    MainActivity.topMargin/2 + 0, paint);
             canvas.drawText("Y = " + Y[instanceSelected],
-                    MainActivity.screenWidth / 2,
-                    MainActivity.topMargin / 2 + 50, paint);
+                    MainActivity.screenWidth/2,
+                    MainActivity.topMargin/2 + 50, paint);
         }
     }
 }
